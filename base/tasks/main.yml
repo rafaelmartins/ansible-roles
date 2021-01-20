@@ -49,6 +49,7 @@
 - name: install common packages
   apt:
     pkg:
+      - sudo
       - git
       - haveged
       - htop
