@@ -1,0 +1,57 @@
+---
+- name: add blogc deb repository
+  apt_repository:
+    repo: deb [trusted=yes] https://deb.rgm.io/blogc {{ ansible_facts['lsb']['codename'] }} main
+  when: blogc_deb != 'snapshot'
+
+- name: add blogc-snapshot deb repository
+  apt_repository:
+    repo: deb [trusted=yes] https://deb.rgm.io/blogc-snapshot {{ ansible_facts['lsb']['codename'] }} main
+  when: blogc_deb == 'snapshot'
+
+- name: install packages
+  apt:
+    pkg:
+      - blogc-git-receiver
+      - blogc-make
+      - make
+    update_cache: yes
+    state: latest
+
+- name: add user blogc
+  become: yes
+  user:
+    name: blogc
+    shell: /usr/bin/blogc-git-receiver
+
+- name: create ssh directory for blogc, if needed
+  file:
+    path: /home/blogc/.ssh
+    state: directory
+    owner: blogc
+    group: blogc
+    mode: '0700'
+
+- name: download ssh keys for blogc from github
+  get_url:
+    url: https://github.com/{{ bgr_ssh_github_user }}.keys
+    dest: /home/blogc/.ssh/authorized_keys
+    owner: blogc
+    group: blogc
+    mode: '0600'
+  when: bgr_ssh_github_user is defined
+
+- name: install blogc-git-receiver configuration
+  template:
+    src: blogc-git-receiver.ini.j2
+    dest: /home/blogc/blogc-git-receiver.ini
+    owner: blogc
+    group: blogc
+
+- name: install caddy configuration
+  template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/sites-enabled/blogc-git-receiver
+  when: bgr_with_caddy is defined and bgr_with_caddy
+  notify:
+    - restart caddy

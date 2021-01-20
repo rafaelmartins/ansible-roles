@@ -1,0 +1,6 @@
+{% for website in websites %}
+{% if 'mirror' in website %}
+[repo:{{ website.name }}.git]
+mirror={{ website.mirror }}
+{% endif %}
+{% endfor %}

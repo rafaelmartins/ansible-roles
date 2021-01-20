@@ -1,0 +1,55 @@
+---
+- name: ensure user exists
+  user:
+    name: "{{ item.name }}"
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+  with_items: "{{ global_users + users }}"
+
+- name: ensure ssh directory exists
+  file:
+    path: /home/{{ item.name }}/.ssh
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: '0700'
+  with_items: "{{ global_users + users }}"
+
+- name: download ssh keys
+  get_url:
+    url: https://github.com/{{ item.github }}.keys
+    dest: /home/{{ item.name }}/.ssh/authorized_keys
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: '0600'
+  when: "'github' in item"
+  with_items: "{{ global_users + users }}"
+
+- name: install sudoers configuration
+  template:
+    src: sudoers.j2
+    dest: /etc/sudoers.d/{{ item.name }}
+  with_items: "{{ global_users + users }}"
+
+- name: install sshd configuration
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+  notify: restart sshd
+
+- name: update apt database
+  apt:
+    update_cache: yes
+
+- name: upgrade packages
+  apt:
+    upgrade: safe
+
+- name: install common packages
+  apt:
+    pkg:
+      - git
+      - haveged
+      - htop
+      - lshw
