@@ -1,4 +1,4 @@
 {{ websites|map(attribute="name")|join(", ") }} {
-    root * /home/blogc/repos/blogs/{host}.git/htdocs
+    root * /home/blogc/repos/{host}.git/htdocs
     file_server
 }
