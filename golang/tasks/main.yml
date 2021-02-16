@@ -1,0 +1,20 @@
+---
+- name: add backports deb repository
+  apt_repository:
+    repo: deb http://deb.debian.org/debian {{ ansible_facts['lsb']['codename'] }}-backports main
+  when: ansible_facts['lsb']['codename'] == "buster"
+
+- name: install golang from backports
+  apt:
+    name: golang
+    state: latest
+    default_release: "{{ ansible_facts['lsb']['codename'] }}-backports"
+    update_cache: yes
+  when: ansible_facts['lsb']['codename'] == "buster"
+
+- name: install golang from main repository
+  apt:
+    name: golang
+    state: latest
+    update_cache: yes
+  when: ansible_facts['lsb']['codename'] != "buster"

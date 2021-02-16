@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -eo pipefail
+shopt -s nullglob
+
+do_tarsnap() {
+    tarsnap \
+        --quiet \
+        --humanize-numbers \
+        --cachedir "${TARSNAP_CACHEDIR:-/var/cache/tarsnap}" \
+        --keyfile "${TARSNAP_KEYFILE:-/etc/tarsnap.key}" \
+        "${@}"
+}
+
+if [[ -n "${TARSNAP_RESTORE}" ]]; then
+    backupname="$(do_tarsnap --list-archives | sort | tail -n 1)"
+
+    echo "Restoring backup: ${backupname}" >&2
+    echo >&2
+
+    do_tarsnap \
+        -x \
+        -f "${backupname}" \
+        -C / \
+        *
+
+    touch /var/cache/tarsnap-restored
+
+    exit 0
+fi
+
+paths=()
+for configfile in "${TARSNAP_CONFIGDIR:-/etc/tarsnap.d}"/*; do
+    while read l; do
+        line=$(echo "${l}")
+        if [[ -z "${line}" ]] || [[ "x${line}" = "x#"* ]]; then
+            continue
+        fi
+        paths+=("${line}")
+    done < "${configfile}"
+done
+
+backupname="$(hostname)_$(date -u +%Y%m%d%H%M%S)"
+
+echo "Starting backup: ${backupname}" >&2
+echo "Paths: $(printf '"%s" ' "${paths[@]}")" >&2
+echo >&2
+
+do_tarsnap \
+    -c \
+    -f "${backupname}" \
+    -C / \
+    "${paths[@]}"

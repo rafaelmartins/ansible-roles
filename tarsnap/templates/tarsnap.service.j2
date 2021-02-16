@@ -1,0 +1,10 @@
+[Unit]
+Description=tarsnap backup service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/telegram-notify -id="%H" -success /usr/local/bin/tarsnap-wrapper
+Environment=TELEGRAM_NOTIFY_TOKEN={{ telegram_notify_token }}
+Environment=TELEGRAM_NOTIFY_CHAT_ID={{ telegram_notify_chat_id }}
+SyslogIdentifier=tarsnap
+User=root

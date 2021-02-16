@@ -1,0 +1,67 @@
+---
+- name: install gpg
+  apt:
+    name: gpg
+    state: latest
+    update_cache: yes
+
+- name: add tarsnap gpg key
+  apt_key:
+    url: https://pkg.tarsnap.com/tarsnap-deb-packaging-key.asc
+
+- name: add tarsnap deb repository
+  apt_repository:
+    repo: deb http://pkg.tarsnap.com/deb/{{ ansible_facts['lsb']['codename'] }} ./
+
+- name: install tarsnap
+  apt:
+    name: tarsnap
+    state: latest
+    update_cache: yes
+
+- name: copy tarsnap-wrapper
+  copy:
+    src: files/tarsnap-wrapper
+    dest: /usr/local/bin/tarsnap-wrapper
+    mode: 0755
+
+- name: create /etc/tarsnap.d, if needed
+  file:
+    path: /etc/tarsnap.d
+    state: directory
+
+- name: copy tarsnap key
+  copy:
+    src: tarsnap_keys/{{ ansible_facts['nodename'] }}
+    dest: /etc/tarsnap.key
+    mode: 0700
+
+- name: create cache if needed
+  command:
+    cmd: tarsnap --cachedir /var/cache/tarsnap --keyfile /etc/tarsnap.key --fsck
+    creates: /var/cache/tarsnap/directory
+
+- name: create systemd service
+  template:
+    src: tarsnap.service.j2
+    dest: /etc/systemd/system/tarsnap.service
+
+- name: copy systemd timer
+  copy:
+    src: files/tarsnap.timer
+    dest: /etc/systemd/system/tarsnap.timer
+
+- name: restore backup
+  command:
+    cmd: /usr/local/bin/tarsnap-wrapper
+    creates: /var/cache/tarsnap-restored
+  environment:
+    TARSNAP_RESTORE: "1"
+  when: tarsnap_restore is defined and tarsnap_restore
+
+- name: enable and start systemd timer
+  systemd:
+    name: tarsnap.timer
+    state: started
+    enabled: yes
+    daemon_reload: yes

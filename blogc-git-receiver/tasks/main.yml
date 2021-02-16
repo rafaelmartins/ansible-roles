@@ -55,3 +55,8 @@
   when: bgr_with_caddy is defined and bgr_with_caddy
   notify:
     - restart caddy
+
+- name: backup /home/blogc
+  copy:
+    content: "/home/blogc\n"
+    dest: /etc/tarsnap.d/blogc-git-receiver

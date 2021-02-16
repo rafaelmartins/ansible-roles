@@ -31,3 +31,8 @@
     dest: /etc/caddy/Caddyfile
   notify:
     - restart caddy
+
+- name: backup /var/lib/caddy
+  copy:
+    content: "/var/lib/caddy\n"
+    dest: /etc/tarsnap.d/caddy

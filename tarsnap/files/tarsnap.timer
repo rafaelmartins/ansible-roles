@@ -1,0 +1,9 @@
+[Unit]
+Description=run tarsnap daily and on startup
+
+[Timer]
+OnActiveSec=30min
+OnCalendar=daily
+
+[Install]
+WantedBy=timers.target

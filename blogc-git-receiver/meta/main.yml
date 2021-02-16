@@ -2,3 +2,4 @@
 dependencies:
   - role: caddy
     when: bgr_with_caddy is defined and bgr_with_caddy
+  - role: tarsnap

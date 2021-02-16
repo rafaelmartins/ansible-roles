@@ -1,0 +1,23 @@
+---
+- name: install git
+  apt:
+    name: git
+    state: latest
+    update_cache: yes
+
+- name: clone or update telegram-notify git repository
+  git:
+    repo: https://github.com/rafaelmartins/telegram-notify.git
+    dest: /var/build/telegram-notify
+  register: telegram_notify_git
+
+- name: check if telegram-notify exists
+  stat:
+    path: /usr/local/bin/telegram-notify
+  register: telegram_notify_bin
+
+- name: build telegram-notify
+  command:
+    cmd: go build -o /usr/local/bin/telegram-notify
+    chdir: /var/build/telegram-notify
+  when: telegram_notify_git.changed or not telegram_notify_bin.stat.exists
