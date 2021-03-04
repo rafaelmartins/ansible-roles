@@ -1,0 +1,62 @@
+---
+- name: install git
+  apt:
+    name: git
+    state: latest
+    update_cache: yes
+
+- name: clone or update ledns git repository
+  git:
+    repo: https://github.com/rafaelmartins/ledns.git
+    dest: /var/build/ledns
+  register: ledns_git
+
+- name: check if ledns exists
+  stat:
+    path: /usr/local/bin/ledns
+  register: ledns_bin
+
+- name: build ledns
+  command:
+    cmd: go build -o /usr/local/bin/ledns
+    chdir: /var/build/ledns
+  when: ledns_git.changed or not ledns_bin.stat.exists
+
+- name: ensure ledns configuration directory exists
+  file:
+    path: /etc/ledns.d
+    state: directory
+
+- name: ensure ledns data directory exists
+  file:
+    path: /var/lib/ledns
+    state: directory
+
+- name: create global ledns configuration
+  copy:
+    content: "{% for cert in ssl_certificates %}\n{{ cert|join(' ') }}\n{% endfor %}"
+    dest: /etc/ledns.d/00-global
+  when: ssl_certificates is defined
+  notify: start ledns
+
+- name: create systemd service
+  template:
+    src: ledns.service.j2
+    dest: /etc/systemd/system/ledns.service
+
+- name: copy systemd timer
+  copy:
+    src: files/ledns.timer
+    dest: /etc/systemd/system/ledns.timer
+
+- name: enable and start systemd timer
+  systemd:
+    name: ledns.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: backup /var/lib/ledns
+  copy:
+    content: "/var/lib/ledns\n"
+    dest: /etc/tarsnap.d/ledns
