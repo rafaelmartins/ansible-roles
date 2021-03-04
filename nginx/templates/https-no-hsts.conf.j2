@@ -1,0 +1,17 @@
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH;
+
+ssl_buffer_size 8k;
+ssl_prefer_server_ciphers on;
+ssl_session_cache shared:SSL:30m;
+ssl_session_timeout 30m;
+
+ssl_certificate /var/lib/ledns/certs/{{ item[0] }}/fullchain.pem;
+ssl_certificate_key /var/lib/ledns/certs/{{ item[0] }}/privkey.pem;
+ssl_trusted_certificate /var/lib/ledns/certs/{{ item[0] }}/fullchain.pem;
+ssl_dhparam dhparam-{{ item[0] }}.pem;
+
+ssl_stapling on;
+ssl_stapling_verify on;
+
+resolver 8.8.8.8 8.8.4.4;

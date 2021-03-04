@@ -1,0 +1,14 @@
+# Redirect any HTTP request to HTTPS.
+server {
+    listen 80 default_server;
+    server_name _;
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+    {% endif %}
+
+    location / {
+        return 302 https://$host$request_uri;
+    }
+}

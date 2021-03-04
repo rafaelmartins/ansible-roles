@@ -1,0 +1,61 @@
+user nginx;
+worker_processes auto;
+
+{% if nginx_logging is defined and nginx_logging %}
+error_log /var/log/nginx/error.log warn;
+{% endif %}
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    accept_mutex on;
+    use epoll;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    {% if nginx_logging is defined and nginx_logging %}
+    log_format main
+        '$remote_addr - $host - $remote_user [$time_local] '
+        '"$request" $status $bytes_sent '
+        '"$http_referer" "$http_user_agent" '
+        '"$gzip_ratio"';
+    access_log /var/log/nginx/access.log main;
+    {% endif %}
+
+    server_names_hash_bucket_size 64;
+
+    client_header_timeout 10m;
+    client_body_timeout 10m;
+    send_timeout 10m;
+
+    types_hash_max_size 4096;
+
+    connection_pool_size 256;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 2k;
+    request_pool_size 4k;
+
+    gzip on;
+    gzip_min_length 1100;
+    gzip_buffers 4 8k;
+    gzip_types text/plain text/css application/javascript;
+
+    output_buffers 1 32k;
+    postpone_output 1460;
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+
+    keepalive_timeout 75 20;
+
+    ignore_invalid_headers on;
+
+    charset utf-8;
+    index index.html index.xml;
+
+    include /etc/nginx/conf.d/*.conf;
+}

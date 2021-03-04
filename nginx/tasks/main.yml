@@ -1,0 +1,69 @@
+---
+- name: install gpg
+  apt:
+    name: gpg
+    state: latest
+    update_cache: yes
+
+- name: add nginx gpg key
+  apt_key:
+    url: https://nginx.org/keys/nginx_signing.key
+
+- name: add nginx deb repository
+  apt_repository:
+    repo: deb http://nginx.org/packages/mainline/debian {{ ansible_facts['lsb']['codename'] }} nginx
+
+- name: install nginx
+  apt:
+    name: nginx
+    state: latest
+    update_cache: yes
+
+- name: install nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify:
+    - restart nginx
+
+- name: remove default site
+  file:
+    path: /etc/nginx/conf.d/default.conf
+    state: absent
+  notify:
+    - restart nginx
+
+- name: create dhparam
+  command:
+    cmd: openssl dhparam -dsaparam -out /etc/nginx/dhparam-{{ item[0] }}.pem 4096
+    creates: /etc/nginx/dhparam-{{ item[0] }}.pem
+  loop: "{{ ssl_certificates }}"
+  when: ssl_certificates is defined
+  notify:
+    - restart nginx
+
+- name: create https configuration (no hsts)
+  template:
+    src: https-no-hsts.conf.j2
+    dest: /etc/nginx/https-{{ item[0] }}-no-hsts.conf
+  loop: "{{ ssl_certificates }}"
+  when: ssl_certificates is defined
+  notify:
+    - restart nginx
+
+- name: create https configuration
+  template:
+    src: https.conf.j2
+    dest: /etc/nginx/https-{{ item[0] }}.conf
+  loop: "{{ ssl_certificates }}"
+  when: ssl_certificates is defined
+  notify:
+    - restart nginx
+
+- name: create https redirect
+  template:
+    src: 00-https-redirect.conf.j2
+    dest: /etc/nginx/conf.d/00-https-redirect.conf
+  when: ssl_certificates is defined
+  notify:
+    - restart nginx
