@@ -1,9 +1,8 @@
 [Unit]
-Description=run tarsnap daily and on startup
+Description=run tarsnap daily @ 4AM
 
 [Timer]
-OnActiveSec=30min
-OnCalendar=daily
+OnCalendar=*-*-* 4:00:00
 
 [Install]
 WantedBy=timers.target
