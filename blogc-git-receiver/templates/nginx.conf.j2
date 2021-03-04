@@ -1,0 +1,21 @@
+server {
+    {% if 'ssl_config' in item %}
+    listen 443 http2 ssl;
+    server_name {{ item.name }};
+    include {{ item.ssl_config }};
+    {% else %}
+    listen 80;
+    server_name {{ item.name }};
+    {% endif %}
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/{{ item.name }}.access.log main;
+    error_log /var/log/nginx/{{ item.name }}.error.log warn;
+    {% endif %}
+
+    root /home/blogc/repos/{{ item.name }}.git/htdocs;
+
+{% if 'nginx_snippet' in item %}
+{{ item.nginx_snippet }}
+{% endif %}
+}

@@ -48,13 +48,13 @@
     owner: blogc
     group: blogc
 
-- name: install caddy configuration
+- name: install nginx configurations
   template:
-    src: Caddyfile.j2
-    dest: /etc/caddy/sites-enabled/blogc-git-receiver
-  when: bgr_with_caddy is defined and bgr_with_caddy
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/50-{{ item.name }}.conf
+  loop: "{{ bgr_websites }}"
   notify:
-    - restart caddy
+    - restart nginx
 
 - name: backup /home/blogc
   copy:
