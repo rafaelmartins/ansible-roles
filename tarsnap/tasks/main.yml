@@ -32,7 +32,7 @@
 
 - name: copy tarsnap key
   copy:
-    src: tarsnap_keys/{{ ansible_facts['nodename'] }}
+    src: tarsnap_keys/{{ ansible_facts['fqdn'] }}
     dest: /etc/tarsnap.key
     mode: 0700
 

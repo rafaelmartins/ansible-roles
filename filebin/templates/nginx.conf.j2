@@ -1,0 +1,73 @@
+map $request_method $limit_post {
+    default "";
+    POST    $binary_remote_addr;
+}
+
+map $request_method $limit_delete {
+    default "";
+    DELETE  $binary_remote_addr;
+}
+
+limit_req_zone $binary_remote_addr zone=get:10m rate=30r/m;
+limit_req_zone $limit_post zone=post:10m rate=30r/m;
+limit_req_zone $limit_delete zone=delete:10m rate=30r/m;
+
+server {
+    {% if filebin_ssl_config is defined %}
+    listen 443 http2 ssl;
+    server_name {{ filebin_server_name }};
+    include {{ filebin_ssl_config }};
+    {% else %}
+    listen 80;
+    server_name {{ filebin_server_name }};
+    {% endif %}
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/{{ filebin_server_name }}.access.log main;
+    error_log /var/log/nginx/{{ filebin_server_name }}.error.log warn;
+    {% endif %}
+
+    client_body_buffer_size 100m;
+    client_max_body_size 5g;
+
+    location = / {
+        limit_req zone=post burst=5;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /list {
+        limit_req zone=get burst=5;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ~* ^/[a-zA-Z0-9]+$ {
+        limit_req zone=delete burst=5;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_send_timeout 600s;
+        proxy_read_timeout 600s;
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

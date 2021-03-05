@@ -1,0 +1,4 @@
+- name: restart filebin
+  systemd:
+    name: filebin
+    state: restarted

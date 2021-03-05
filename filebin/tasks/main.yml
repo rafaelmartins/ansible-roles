@@ -1,0 +1,48 @@
+---
+- name: install dependencies
+  apt:
+    pkg:
+      - git
+      - libmagic-dev
+    state: latest
+    update_cache: yes
+
+- name: clone or update filebin git repository
+  git:
+    repo: https://github.com/rafaelmartins/filebin.git
+    dest: /var/build/filebin
+  register: filebin_git
+
+- name: check if filebin exists
+  stat:
+    path: /usr/local/bin/filebin
+  register: filebin_bin
+
+- name: build filebin
+  command:
+    cmd: go build -o /usr/local/bin/filebin
+    chdir: /var/build/filebin
+  when: filebin_git.changed or not filebin_bin.stat.exists
+  notify:
+    - restart filebin
+
+- name: install nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/90-{{ filebin_server_name }}.conf
+  notify:
+    - restart nginx
+
+- name: create systemd service
+  template:
+    src: filebin.service.j2
+    dest: /etc/systemd/system/filebin.service
+  notify:
+    - restart filebin
+
+- name: enable and start systemd service
+  systemd:
+    name: filebin
+    enabled: yes
+    state: started
+    daemon_reload: yes
