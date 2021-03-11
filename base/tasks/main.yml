@@ -18,6 +18,61 @@
   tags:
     - bootstrap
 
+- name: check if /dev/hwrng exists
+  stat:
+    path: /dev/hwrng
+  register: hwrng
+
+- name: remove haveged (we have /dev/hwrng)
+  apt:
+    name: haveged
+    state: absent
+  when: hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: install rng-tools (we have /dev/hwrng)
+  apt:
+    name: rng-tools
+  when: hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: ensure that rng-tools is enabled and running (we have /dev/hwrng)
+  systemd:
+    name: rng-tools
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: remove rng-tools (we don't have /dev/hwrng)
+  apt:
+    name: rng-tools
+    state: absent
+  when: not hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: install haveged (we don't have /dev/hwrng)
+  apt:
+    name: haveged
+  when: not hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: ensure that haveged is enabled and running (we don't have /dev/hwrng)
+  systemd:
+    name: haveged
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: not hwrng.stat.exists
+  tags:
+    - bootstrap
+
 - name: ensure user exists
   user:
     name: "{{ item.name }}"
