@@ -1,5 +1,3 @@
 ---
 dependencies:
   - role: base
-  - role: golang
-  - role: nginx

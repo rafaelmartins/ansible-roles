@@ -1,10 +1,4 @@
 ---
-- name: install gpg
-  apt:
-    name: gpg
-    state: latest
-    update_cache: yes
-
 - name: add tarsnap gpg key
   apt_key:
     url: https://pkg.tarsnap.com/tarsnap-deb-packaging-key.asc
@@ -16,7 +10,6 @@
 - name: install tarsnap
   apt:
     name: tarsnap
-    state: latest
     update_cache: yes
 
 - name: copy tarsnap-wrapper

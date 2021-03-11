@@ -1,10 +1,7 @@
 ---
 - name: install dependencies
   apt:
-    pkg:
-      - git
-      - libmagic-dev
-    state: latest
+    name: libmagic-dev
     update_cache: yes
 
 - name: clone or update filebin git repository

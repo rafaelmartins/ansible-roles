@@ -1,20 +1,22 @@
 ---
-- name: update apt database
+- name: update system packages
   apt:
     update_cache: yes
-
-- name: upgrade packages
-  apt:
     upgrade: safe
+  tags:
+    - bootstrap
 
 - name: install common packages
   apt:
     pkg:
       - sudo
       - git
+      - gpg
       - haveged
       - htop
       - lshw
+  tags:
+    - bootstrap
 
 - name: ensure user exists
   user:
@@ -23,6 +25,8 @@
     groups: sudo
     append: yes
   with_items: "{{ global_users + users }}"
+  tags:
+    - bootstrap
 
 - name: ensure ssh directory exists
   file:
@@ -30,8 +34,10 @@
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
-    mode: '0700'
+    mode: "0700"
   with_items: "{{ global_users + users }}"
+  tags:
+    - bootstrap
 
 - name: download ssh keys
   get_url:
@@ -39,18 +45,24 @@
     dest: /home/{{ item.name }}/.ssh/authorized_keys
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
-    mode: '0600'
+    mode: "0600"
   when: "'github' in item"
   with_items: "{{ global_users + users }}"
+  tags:
+    - bootstrap
 
 - name: install sudoers configuration
   template:
     src: sudoers.j2
     dest: /etc/sudoers.d/{{ item.name }}
   with_items: "{{ global_users + users }}"
+  tags:
+    - bootstrap
 
 - name: install sshd configuration
   template:
     src: sshd_config.j2
     dest: /etc/ssh/sshd_config
   notify: restart sshd
+  tags:
+    - bootstrap

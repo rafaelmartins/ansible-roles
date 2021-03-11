@@ -16,7 +16,6 @@
       - blogc-make
       - make
     update_cache: yes
-    state: latest
 
 - name: add user blogc
   become: yes

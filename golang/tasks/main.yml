@@ -7,7 +7,6 @@
 - name: install golang from backports
   apt:
     name: golang
-    state: latest
     default_release: "{{ ansible_facts['lsb']['codename'] }}-backports"
     update_cache: yes
   when: ansible_facts['lsb']['codename'] == "buster"
@@ -15,6 +14,5 @@
 - name: install golang from main repository
   apt:
     name: golang
-    state: latest
     update_cache: yes
   when: ansible_facts['lsb']['codename'] != "buster"

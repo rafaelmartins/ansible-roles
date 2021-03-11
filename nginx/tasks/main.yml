@@ -1,10 +1,4 @@
 ---
-- name: install gpg
-  apt:
-    name: gpg
-    state: latest
-    update_cache: yes
-
 - name: add nginx gpg key
   apt_key:
     url: https://nginx.org/keys/nginx_signing.key
@@ -16,7 +10,6 @@
 - name: install nginx
   apt:
     name: nginx
-    state: latest
     update_cache: yes
 
 - name: install nginx configuration
