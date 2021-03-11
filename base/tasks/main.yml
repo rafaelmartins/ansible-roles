@@ -12,7 +12,6 @@
       - sudo
       - git
       - gpg
-      - haveged
       - htop
       - lshw
   tags:
