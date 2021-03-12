@@ -21,6 +21,8 @@
   stat:
     path: /dev/hwrng
   register: hwrng
+  tags:
+    - bootstrap
 
 - name: remove haveged (we have /dev/hwrng)
   apt:
