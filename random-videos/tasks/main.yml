@@ -1,0 +1,20 @@
+---
+- name: create directory
+  file:
+    path: /var/www/random-videos/{{ item.key }}
+    state: directory
+  loop: "{{ random_videos | dict2items }}"
+
+- name: create html file
+  template:
+    src: index.html.j2
+    dest: /var/www/random-videos/{{ item.key }}/index.html
+  loop: "{{ random_videos | dict2items }}"
+
+- name: install nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/60-{{ item.key }}.conf
+  loop: "{{ random_videos | dict2items }}"
+  notify:
+    - restart nginx

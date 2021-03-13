@@ -1,0 +1,17 @@
+server {
+    {% if 'ssl_config' in item.value %}
+    listen 443 http2 ssl;
+    server_name {{ item.key }};
+    include {{ item.value.ssl_config }};
+    {% else %}
+    listen 80;
+    server_name {{ item.key }};
+    {% endif %}
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/{{ item.key }}.access.log main;
+    error_log /var/log/nginx/{{ item.key }}.error.log warn;
+    {% endif %}
+
+    root /var/www/random-videos/{{ item.key }};
+}
