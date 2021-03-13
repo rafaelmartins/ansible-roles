@@ -1,0 +1,13 @@
+[Unit]
+Description=distfiles service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/distfiles
+Environment=DISTFILES_AUTH_TOKEN={{ distfiles_auth_token }}
+Environment=DISTFILES_LISTEN_ADDR={{ distfiles_listen_addr }}
+Environment=DISTFILES_STORAGE_DIR={{ distfiles_storage_dir }}
+User=nobody
+
+[Install]
+WantedBy=multi-user.target

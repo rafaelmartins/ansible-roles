@@ -1,0 +1,4 @@
+- name: restart distfiles
+  systemd:
+    name: distfiles
+    state: restarted

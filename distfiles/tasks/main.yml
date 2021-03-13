@@ -1,0 +1,50 @@
+---
+- name: clone or update distfiles git repository
+  git:
+    repo: https://github.com/rafaelmartins/distfiles.git
+    dest: /var/build/distfiles
+  register: distfiles_git
+
+- name: check if distfiles exists
+  stat:
+    path: /usr/local/bin/distfiles
+  register: distfiles_bin
+
+- name: build distfiles
+  command:
+    cmd: go build -o /usr/local/bin/distfiles
+    chdir: /var/build/distfiles
+  when: distfiles_git.changed or not distfiles_bin.stat.exists
+  notify:
+    - restart distfiles
+
+- name: ensure storage directory exists
+  file:
+    path: "{{ distfiles_storage_dir }}"
+    state: directory
+    owner: nobody
+    group: nogroup
+    mode: "0755"
+  notify:
+    - restart distfiles
+
+- name: install nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/90-{{ distfiles_server_name }}.conf
+  notify:
+    - restart nginx
+
+- name: create systemd service
+  template:
+    src: distfiles.service.j2
+    dest: /etc/systemd/system/distfiles.service
+  notify:
+    - restart distfiles
+
+- name: enable and start systemd service
+  systemd:
+    name: distfiles
+    enabled: yes
+    state: started
+    daemon_reload: yes
