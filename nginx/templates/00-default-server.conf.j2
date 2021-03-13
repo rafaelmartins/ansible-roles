@@ -1,0 +1,17 @@
+server {
+    {% if ssl_certificates is defined and ssl_certificates|length > 0 %}
+    listen 443 http2 ssl default_server;
+    server_name _;
+    include https-{{ ssl_certificates[0][0] }}-no-hsts.conf;
+    {% else %}
+    listen 80 default_server;
+    server_name _;
+    {% endif %}
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+    {% endif %}
+
+    return 403;
+}
