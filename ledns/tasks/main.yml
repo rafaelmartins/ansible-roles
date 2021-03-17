@@ -1,32 +1,77 @@
 ---
-- name: clone or update ledns git repository
+- name: clone or update git repository
   git:
     repo: https://github.com/rafaelmartins/ledns.git
     dest: /var/build/ledns
   register: ledns_git
+  when: distfiles_listen_addr is defined
 
-- name: check if ledns exists
+- name: check if binary exists
   stat:
     path: /usr/local/bin/ledns
   register: ledns_bin
+  when: distfiles_listen_addr is defined
 
-- name: build ledns
+- name: build binary
   command:
     cmd: go build -o /usr/local/bin/ledns
     chdir: /var/build/ledns
-  when: ledns_git.changed or not ledns_bin.stat.exists
+  when: distfiles_listen_addr is defined and (ledns_git.changed or not ledns_bin.stat.exists)
 
-- name: ensure ledns configuration directory exists
+- name: find latest distfile
+  distfile:
+    name: ledns
+    file_prefix: ledns-linux-amd64-
+  register: ledns_distfile
+  when: distfiles_listen_addr is not defined
+
+- name: download distfile
+  get_url:
+    url: "{{ ledns_distfile.file_url }}"
+    dest: /var/download/ledns.tar.xz
+    checksum: "{{ ledns_distfile.checksum }}"
+  register: ledns_download
+  when: distfiles_listen_addr is not defined
+
+- name: create temporary directory
+  tempfile:
+    state: directory
+  register: ledns_tempdir
+  when: distfiles_listen_addr is not defined and ledns_download.changed
+
+- name: extract distfile
+  unarchive:
+    src: "{{ ledns_download.dest }}"
+    remote_src: yes
+    dest: "{{ ledns_tempdir.path }}"
+    extra_opts:
+      - --strip-components=1
+  when: distfiles_listen_addr is not defined and ledns_download.changed
+
+- name: install binary
+  copy:
+    src: "{{ ledns_tempdir.path }}/ledns"
+    remote_src: yes
+    dest: /usr/local/bin/ledns
+  when: distfiles_listen_addr is not defined and ledns_download.changed
+
+- name: delete temporary directory
+  file:
+    path: "{{ ledns_tempdir.path }}"
+    state: absent
+  when: distfiles_listen_addr is not defined and ledns_download.changed
+
+- name: ensure configuration directory exists
   file:
     path: /etc/ledns.d
     state: directory
 
-- name: ensure ledns data directory exists
+- name: ensure data directory exists
   file:
     path: /var/lib/ledns
     state: directory
 
-- name: create global ledns configuration
+- name: create global configuration
   copy:
     content: "{% for cert in ssl_certificates %}\n{{ cert|join(' ') }}\n{% endfor %}"
     dest: /etc/ledns.d/00-global
@@ -50,7 +95,7 @@
     state: started
     daemon_reload: yes
 
-- name: backup /var/lib/ledns
+- name: backup data directory
   copy:
     content: "/var/lib/ledns\n"
     dest: /etc/tarsnap.d/ledns

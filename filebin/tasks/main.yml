@@ -1,27 +1,57 @@
 ---
-- name: install dependencies
-  apt:
-    name: libmagic-dev
-    update_cache: yes
+- name: find latest distfile
+  distfile:
+    name: filebin
+    version: LATEST
+    file_prefix: filebin-static-linux-amd64-
+    file_extension: .tar.xz
+  register: filebin_distfile
 
-- name: clone or update filebin git repository
-  git:
-    repo: https://github.com/rafaelmartins/filebin.git
-    dest: /var/build/filebin
-  register: filebin_git
+- name: download distfile
+  get_url:
+    url: "{{ filebin_distfile.file_url }}"
+    dest: /var/download/filebin.tar.xz
+    checksum: "{{ filebin_distfile.checksum }}"
+  register: filebin_download
 
-- name: check if filebin exists
-  stat:
-    path: /usr/local/bin/filebin
-  register: filebin_bin
+- name: create temporary directory
+  tempfile:
+    state: directory
+  register: filebin_tempdir
+  when: filebin_download.changed
 
-- name: build filebin
-  command:
-    cmd: go build -o /usr/local/bin/filebin
-    chdir: /var/build/filebin
-  when: filebin_git.changed or not filebin_bin.stat.exists
+- name: extract distfile
+  unarchive:
+    src: "{{ filebin_download.dest }}"
+    remote_src: yes
+    dest: "{{ filebin_tempdir.path }}"
+    extra_opts:
+      - --strip-components=1
+  when: filebin_download.changed
+
+- name: install binary
+  copy:
+    src: "{{ filebin_tempdir.path }}/filebin"
+    remote_src: yes
+    dest: /usr/local/bin/filebin
+  when: filebin_download.changed
   notify:
     - restart filebin
+
+- name: install magic database
+  copy:
+    src: "{{ filebin_tempdir.path }}/magic.mgc"
+    remote_src: yes
+    dest: /usr/local/share/magic.mgc
+  when: filebin_download.changed
+  notify:
+    - restart filebin
+
+- name: delete temporary directory
+  file:
+    path: "{{ filebin_tempdir.path }}"
+    state: absent
+  when: filebin_download.changed
 
 - name: install nginx configuration
   template:

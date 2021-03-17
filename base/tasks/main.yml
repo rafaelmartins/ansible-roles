@@ -123,3 +123,8 @@
   notify: restart sshd
   tags:
     - bootstrap
+
+- name: ensure that distfile download directory exists
+  file:
+    path: /var/download
+    state: directory

@@ -1,17 +1,62 @@
 ---
-- name: clone or update telegram-notify git repository
+- name: clone or update git repository
   git:
     repo: https://github.com/rafaelmartins/telegram-notify.git
     dest: /var/build/telegram-notify
   register: telegram_notify_git
+  when: distfiles_listen_addr is defined
 
-- name: check if telegram-notify exists
+- name: check if binary exists
   stat:
     path: /usr/local/bin/telegram-notify
   register: telegram_notify_bin
+  when: distfiles_listen_addr is defined
 
-- name: build telegram-notify
+- name: build binary
   command:
     cmd: go build -o /usr/local/bin/telegram-notify
     chdir: /var/build/telegram-notify
-  when: telegram_notify_git.changed or not telegram_notify_bin.stat.exists
+  when: distfiles_listen_addr is defined and (telegram_notify_git.changed or not telegram_notify_bin.stat.exists)
+
+- name: find latest distfile
+  distfile:
+    name: telegram-notify
+    file_prefix: telegram-notify-linux-amd64-
+  register: telegram_notify_distfile
+  when: distfiles_listen_addr is not defined
+
+- name: download distfile
+  get_url:
+    url: "{{ telegram_notify_distfile.file_url }}"
+    dest: /var/download/telegram-notify.tar.xz
+    checksum: "{{ telegram_notify_distfile.checksum }}"
+  register: telegram_notify_download
+  when: distfiles_listen_addr is not defined
+
+- name: create temporary directory
+  tempfile:
+    state: directory
+  register: telegram_notify_tempdir
+  when: distfiles_listen_addr is not defined and telegram_notify_download.changed
+
+- name: extract distfile
+  unarchive:
+    src: "{{ telegram_notify_download.dest }}"
+    remote_src: yes
+    dest: "{{ telegram_notify_tempdir.path }}"
+    extra_opts:
+      - --strip-components=1
+  when: distfiles_listen_addr is not defined and telegram_notify_download.changed
+
+- name: install binary
+  copy:
+    src: "{{ telegram_notify_tempdir.path }}/telegram-notify"
+    remote_src: yes
+    dest: /usr/local/bin/telegram-notify
+  when: distfiles_listen_addr is not defined and telegram_notify_download.changed
+
+- name: delete temporary directory
+  file:
+    path: "{{ telegram_notify_tempdir.path }}"
+    state: absent
+  when: distfiles_listen_addr is not defined and telegram_notify_download.changed

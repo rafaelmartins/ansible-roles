@@ -4,6 +4,7 @@ Description=filebin service
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/filebin
+Environment=MAGIC=/usr/local/share/magic.mgc
 Environment=FILEBIN_BASE_URL={{ filebin_base_url }}
 Environment=FILEBIN_STORAGE_DIR={{ filebin_storage_dir }}
 Environment=FILEBIN_LISTEN_ADDR={{ filebin_listen_addr }}
