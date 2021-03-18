@@ -1,10 +1,10 @@
 ---
-- name: add blogc deb repository
+- name: add deb repository
   apt_repository:
     repo: deb [trusted=yes] https://deb.rgm.io/blogc {{ ansible_facts['lsb']['codename'] }} main
   when: blogc_deb != 'snapshot'
 
-- name: add blogc-snapshot deb repository
+- name: add snapshot deb repository
   apt_repository:
     repo: deb [trusted=yes] https://deb.rgm.io/blogc-snapshot {{ ansible_facts['lsb']['codename'] }} main
   when: blogc_deb == 'snapshot'
@@ -17,13 +17,13 @@
       - make
     update_cache: yes
 
-- name: add user blogc
+- name: add user
   become: yes
   user:
     name: blogc
     shell: /usr/bin/blogc-git-receiver
 
-- name: create ssh directory for blogc, if needed
+- name: create ssh directory, if needed
   file:
     path: /home/blogc/.ssh
     state: directory
@@ -31,7 +31,7 @@
     group: blogc
     mode: '0700'
 
-- name: download ssh keys for blogc from github
+- name: download ssh keys from github
   get_url:
     url: https://github.com/{{ bgr_ssh_github_user }}.keys
     dest: /home/blogc/.ssh/authorized_keys
@@ -40,7 +40,7 @@
     mode: '0600'
   when: bgr_ssh_github_user is defined
 
-- name: install blogc-git-receiver configuration
+- name: install configuration
   template:
     src: blogc-git-receiver.ini.j2
     dest: /home/blogc/blogc-git-receiver.ini

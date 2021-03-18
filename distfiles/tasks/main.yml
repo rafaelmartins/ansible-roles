@@ -1,16 +1,16 @@
 ---
-- name: clone or update distfiles git repository
+- name: clone or update git repository
   git:
     repo: https://github.com/rafaelmartins/distfiles.git
     dest: /var/build/distfiles
   register: distfiles_git
 
-- name: check if distfiles exists
+- name: check if binary exists
   stat:
     path: /usr/local/bin/distfiles
   register: distfiles_bin
 
-- name: build distfiles
+- name: build binary
   command:
     cmd: go build -o /usr/local/bin/distfiles
     chdir: /var/build/distfiles

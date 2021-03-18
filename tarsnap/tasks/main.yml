@@ -1,18 +1,18 @@
 ---
-- name: add tarsnap gpg key
+- name: add gpg key
   apt_key:
     url: https://pkg.tarsnap.com/tarsnap-deb-packaging-key.asc
 
-- name: add tarsnap deb repository
+- name: add deb repository
   apt_repository:
     repo: deb http://pkg.tarsnap.com/deb/{{ ansible_facts['lsb']['codename'] }} ./
 
-- name: install tarsnap
+- name: install package
   apt:
     name: tarsnap
     update_cache: yes
 
-- name: copy tarsnap-wrapper
+- name: install wrapper script
   copy:
     src: files/tarsnap-wrapper
     dest: /usr/local/bin/tarsnap-wrapper
@@ -23,7 +23,7 @@
     path: /etc/tarsnap.d
     state: directory
 
-- name: copy tarsnap key
+- name: copy key
   copy:
     src: tarsnap_keys/{{ ansible_facts['fqdn'] }}
     dest: /etc/tarsnap.key
