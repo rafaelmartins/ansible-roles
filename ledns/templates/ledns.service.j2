@@ -10,7 +10,11 @@ Environment=TELEGRAM_NOTIFY_TOKEN={{ telegram_notify_token }}
 Environment=TELEGRAM_NOTIFY_CHAT_ID={{ telegram_notify_chat_id }}
 Environment=LEDNS_CLOUDNS_AUTH_ID={{ ledns_cloudns_auth_id }}
 Environment=LEDNS_CLOUDNS_AUTH_PASSWORD={{ ledns_cloudns_auth_password }}
+{% if tarsnap_timer is defined and not tarsnap_timer %}
+Environment=LEDNS_UPDATE_COMMAND_ONCE="bash -c \"if systemctl is-enabled nginx &> /dev/null; then systemctl --no-block reload nginx; fi; systemctl start tarsnap\""
+{% else %}
 Environment=LEDNS_UPDATE_COMMAND_ONCE="bash -c \"if systemctl is-enabled nginx &> /dev/null; then systemctl --no-block reload nginx; fi\""
+{% endif %}
 Environment=LEDNS_PRODUCTION=true
 SyslogIdentifier=ledns
 User=root

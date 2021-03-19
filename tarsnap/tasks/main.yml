@@ -58,3 +58,12 @@
     state: started
     enabled: yes
     daemon_reload: yes
+  when: tarsnap_timer is not defined or tarsnap_timer
+
+- name: disable systemd timer
+  systemd:
+    name: tarsnap.timer
+    state: stopped
+    enabled: no
+    daemon_reload: yes
+  when: tarsnap_timer is defined and not tarsnap_timer
