@@ -128,3 +128,4 @@
   file:
     path: /var/download
     state: directory
+  when: distfiles_listen_addr is not defined
