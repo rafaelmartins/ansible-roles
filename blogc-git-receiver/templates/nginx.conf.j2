@@ -1,3 +1,24 @@
+{% if 'redirect_www' in item and item.redirect_www %}
+server {
+    {% if 'ssl_config' in item %}
+    listen 443 http2 ssl;
+    server_name www.{{ item.name }};
+    include {{ item.ssl_config }};
+    {% else %}
+    listen 80;
+    server_name www.{{ item.name }};
+    {% endif %}
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/www.{{ item.name }}.access.log main;
+    error_log /var/log/nginx/www.{{ item.name }}.error.log warn;
+    {% endif %}
+
+    location / {
+        return 302 https://{{ item.name }}$request_uri;
+    }
+}
+{% endif %}
 server {
     {% if 'ssl_config' in item %}
     listen 443 http2 ssl;
