@@ -53,6 +53,7 @@
     src: "{{ telegram_notify_tempdir.path }}/telegram-notify"
     remote_src: yes
     dest: /usr/local/bin/telegram-notify
+    mode: "0755"
   when: distfiles_listen_addr is not defined and telegram_notify_download.changed
 
 - name: delete temporary directory

@@ -34,6 +34,7 @@
     src: "{{ filebin_tempdir.path }}/filebin"
     remote_src: yes
     dest: /usr/local/bin/filebin
+    mode: "0755"
   when: filebin_download.changed
   notify:
     - restart filebin

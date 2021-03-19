@@ -53,6 +53,7 @@
     src: "{{ ledns_tempdir.path }}/ledns"
     remote_src: yes
     dest: /usr/local/bin/ledns
+    mode: "0755"
   when: distfiles_listen_addr is not defined and ledns_download.changed
 
 - name: delete temporary directory
