@@ -1,3 +1,4 @@
+---
 - name: restart distfiles
   systemd:
     name: distfiles
