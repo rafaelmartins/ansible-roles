@@ -1,58 +1,15 @@
 ---
-- name: find latest distfile
-  distfile:
-    name: filebin
-    version: LATEST
-    file_prefix: filebin-static-linux-amd64-
-    file_extension: .tar.xz
-  register: filebin_distfile
-
 - name: download distfile
-  get_url:
-    url: "{{ filebin_distfile.file_url }}"
-    dest: /var/download/filebin.tar.xz
-    checksum: "{{ filebin_distfile.checksum }}"
-  register: filebin_download
-
-- name: create temporary directory
-  tempfile:
-    state: directory
-  register: filebin_tempdir
-  when: filebin_download.changed
-
-- name: extract distfile
-  unarchive:
-    src: "{{ filebin_download.dest }}"
-    remote_src: yes
-    dest: "{{ filebin_tempdir.path }}"
-    extra_opts:
-      - --strip-components=1
-  when: filebin_download.changed
-
-- name: install binary
-  copy:
-    src: "{{ filebin_tempdir.path }}/filebin"
-    remote_src: yes
-    dest: /usr/local/bin/filebin
-    mode: "0755"
-  when: filebin_download.changed
-  notify:
-    - restart filebin
-
-- name: install magic database
-  copy:
-    src: "{{ filebin_tempdir.path }}/magic.mgc"
-    remote_src: yes
-    dest: /usr/local/share/magic.mgc
-  when: filebin_download.changed
-  notify:
-    - restart filebin
-
-- name: delete temporary directory
-  file:
-    path: "{{ filebin_tempdir.path }}"
-    state: absent
-  when: filebin_download.changed
+  include_role:
+    name: distfile
+  vars:
+    distfile_name: filebin
+    distfile_file_prefix: filebin-static-linux-amd64-
+    distfile_file_extension: .tar.xz
+    distfile_bin:
+      - filebin
+    distfile_data:
+      magic.mgc: /usr/local/share
 
 - name: install nginx configuration
   template:

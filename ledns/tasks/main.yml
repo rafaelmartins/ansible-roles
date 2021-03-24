@@ -12,55 +12,28 @@
   register: ledns_bin
   when: distfiles_listen_addr is defined
 
+- name: install golang
+  apt:
+    name: golang
+    default_release: "{{ ansible_facts.lsb.codename }}-backports"
+    update_cache: yes
+  when: distfiles_listen_addr is defined and (ledns_git.changed or not ledns_bin.stat.exists)
+
 - name: build binary
   command:
     cmd: go build -o /usr/local/bin/ledns
     chdir: /var/build/ledns
   when: distfiles_listen_addr is defined and (ledns_git.changed or not ledns_bin.stat.exists)
 
-- name: find latest distfile
-  distfile:
-    name: ledns
-    file_prefix: ledns-linux-amd64-
-  register: ledns_distfile
-  when: distfiles_listen_addr is not defined
-
 - name: download distfile
-  get_url:
-    url: "{{ ledns_distfile.file_url }}"
-    dest: /var/download/ledns.tar.xz
-    checksum: "{{ ledns_distfile.checksum }}"
-  register: ledns_download
+  include_role:
+    name: distfile
+  vars:
+    distfile_name: ledns
+    distfile_file_prefix: ledns-linux-amd64-
+    distfile_bin:
+      - ledns
   when: distfiles_listen_addr is not defined
-
-- name: create temporary directory
-  tempfile:
-    state: directory
-  register: ledns_tempdir
-  when: distfiles_listen_addr is not defined and ledns_download.changed
-
-- name: extract distfile
-  unarchive:
-    src: "{{ ledns_download.dest }}"
-    remote_src: yes
-    dest: "{{ ledns_tempdir.path }}"
-    extra_opts:
-      - --strip-components=1
-  when: distfiles_listen_addr is not defined and ledns_download.changed
-
-- name: install binary
-  copy:
-    src: "{{ ledns_tempdir.path }}/ledns"
-    remote_src: yes
-    dest: /usr/local/bin/ledns
-    mode: "0755"
-  when: distfiles_listen_addr is not defined and ledns_download.changed
-
-- name: delete temporary directory
-  file:
-    path: "{{ ledns_tempdir.path }}"
-    state: absent
-  when: distfiles_listen_addr is not defined and ledns_download.changed
 
 - name: ensure configuration directory exists
   file:

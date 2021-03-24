@@ -1,4 +1,10 @@
 ---
+- name: ensure that backports repository is enabled
+  apt_repository:
+    repo: deb http://deb.debian.org/debian {{ ansible_facts.lsb.codename }}-backports main
+  tags:
+    - bootstrap
+
 - name: update system packages
   apt:
     update_cache: yes
@@ -123,9 +129,3 @@
   notify: restart sshd
   tags:
     - bootstrap
-
-- name: ensure that distfile download directory exists
-  file:
-    path: /var/download
-    state: directory
-  when: distfiles_listen_addr is not defined

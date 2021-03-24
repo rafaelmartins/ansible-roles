@@ -10,6 +10,13 @@
     path: /usr/local/bin/distfiles
   register: distfiles_bin
 
+- name: install golang
+  apt:
+    name: golang
+    default_release: "{{ ansible_facts.lsb.codename }}-backports"
+    update_cache: yes
+  when: distfiles_git.changed or not distfiles_bin.stat.exists
+
 - name: build binary
   command:
     cmd: go build -o /usr/local/bin/distfiles

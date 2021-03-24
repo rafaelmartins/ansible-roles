@@ -12,52 +12,25 @@
   register: telegram_notify_bin
   when: distfiles_listen_addr is defined
 
+- name: install golang
+  apt:
+    name: golang
+    default_release: "{{ ansible_facts.lsb.codename }}-backports"
+    update_cache: yes
+  when: distfiles_listen_addr is defined and (telegram_notify_git.changed or not telegram_notify_bin.stat.exists)
+
 - name: build binary
   command:
     cmd: go build -o /usr/local/bin/telegram-notify
     chdir: /var/build/telegram-notify
   when: distfiles_listen_addr is defined and (telegram_notify_git.changed or not telegram_notify_bin.stat.exists)
 
-- name: find latest distfile
-  distfile:
-    name: telegram-notify
-    file_prefix: telegram-notify-linux-amd64-
-  register: telegram_notify_distfile
-  when: distfiles_listen_addr is not defined
-
 - name: download distfile
-  get_url:
-    url: "{{ telegram_notify_distfile.file_url }}"
-    dest: /var/download/telegram-notify.tar.xz
-    checksum: "{{ telegram_notify_distfile.checksum }}"
-  register: telegram_notify_download
+  include_role:
+    name: distfile
+  vars:
+    distfile_name: telegram-notify
+    distfile_file_prefix: telegram-notify-linux-amd64-
+    distfile_bin:
+      - telegram-notify
   when: distfiles_listen_addr is not defined
-
-- name: create temporary directory
-  tempfile:
-    state: directory
-  register: telegram_notify_tempdir
-  when: distfiles_listen_addr is not defined and telegram_notify_download.changed
-
-- name: extract distfile
-  unarchive:
-    src: "{{ telegram_notify_download.dest }}"
-    remote_src: yes
-    dest: "{{ telegram_notify_tempdir.path }}"
-    extra_opts:
-      - --strip-components=1
-  when: distfiles_listen_addr is not defined and telegram_notify_download.changed
-
-- name: install binary
-  copy:
-    src: "{{ telegram_notify_tempdir.path }}/telegram-notify"
-    remote_src: yes
-    dest: /usr/local/bin/telegram-notify
-    mode: "0755"
-  when: distfiles_listen_addr is not defined and telegram_notify_download.changed
-
-- name: delete temporary directory
-  file:
-    path: "{{ telegram_notify_tempdir.path }}"
-    state: absent
-  when: distfiles_listen_addr is not defined and telegram_notify_download.changed

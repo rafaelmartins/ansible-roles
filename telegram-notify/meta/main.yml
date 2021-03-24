@@ -1,5 +1,3 @@
 ---
 dependencies:
   - role: base
-  - role: golang
-    when: distfiles_listen_addr is defined
