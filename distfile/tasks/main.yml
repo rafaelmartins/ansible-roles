@@ -1,0 +1,66 @@
+---
+- name: ensure that download directory exists
+  file:
+    path: /var/download
+    state: directory
+
+- name: find
+  distfile:
+    name: "{{ distfile_name }}"
+    version: "{{ distfile_version|default('LATEST') }}"
+    file_prefix: "{{ distfile_file_prefix|default(distfile_name+'-') }}"
+    file_extension: "{{ distfile_file_extension|default('.tar.gz') }}"
+  register: distfile
+
+- name: download
+  get_url:
+    url: "{{ distfile.file_url }}"
+    dest: /var/download/{{ distfile_name }}.tar.xz
+    checksum: "{{ distfile.checksum }}"
+  register: distfile_download
+
+- name: create temporary directory
+  tempfile:
+    state: directory
+  register: distfile_tempdir
+  when: distfile_download.changed
+
+- name: extract
+  unarchive:
+    src: "{{ distfile_download.dest }}"
+    remote_src: yes
+    dest: "{{ distfile_tempdir.path }}"
+    extra_opts:
+      - --strip-components=1
+  when: distfile_download.changed
+
+- name: install binaries
+  copy:
+    src: "{{ distfile_tempdir.path }}/{{ item }}"
+    remote_src: yes
+    dest: /usr/local/bin/{{ item }}
+    mode: "0755"
+  loop: "{{ distfile_bin }}"
+  when: distfile_download.changed and distfile_bin is defined
+
+- name: create data directories
+  file:
+    path: "{{ item.value }}"
+    state: directory
+  loop: "{{ distfile_data | dict2items }}"
+  when: distfile_download.changed and distfile_data is defined
+
+- name: install data
+  copy:
+    src: "{{ distfile_tempdir.path }}/{{ item.key }}"
+    remote_src: yes
+    dest: "{{ item.value }}/{{ item.key | basename }}"
+    mode: "0644"
+  loop: "{{ distfile_data | dict2items }}"
+  when: distfile_download.changed and distfile_data is defined
+
+- name: delete temporary directory
+  file:
+    path: "{{ distfile_tempdir.path }}"
+    state: absent
+  when: distfile_download.changed
