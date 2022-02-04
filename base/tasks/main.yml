@@ -45,8 +45,8 @@
     - bootstrap
 
 - name: store apt upgrade logs
-  copy:
-    content: "{{ apt_upgrade.stdout }}"
+  template:
+    src: full-upgrade.log.j2
     dest: /var/log/apt-upgrades/full-upgrade_{{ ansible_date_time.iso8601 }}.log
   when: apt_upgrade.changed
   tags:

@@ -47,8 +47,8 @@
     state: directory
 
 - name: create global configuration
-  copy:
-    content: "{% for cert in ssl_certificates %}\n{{ cert|join(' ') }}\n{% endfor %}"
+  template:
+    src: 00-global.j2
     dest: /etc/ledns.d/00-global
   when: ssl_certificates is defined
   notify: start ledns
