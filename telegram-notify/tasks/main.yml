@@ -1,4 +1,12 @@
 ---
+- name: install golang
+  apt:
+    name: golang
+    default_release: "{{ debian_codename }}-backports"
+    update_cache: yes
+    state: latest
+  when: distfiles_listen_addr is defined
+
 - name: clone or update git repository
   git:
     repo: https://github.com/rafaelmartins/telegram-notify.git
@@ -11,14 +19,6 @@
     path: /usr/local/bin/telegram-notify
   register: telegram_notify_bin
   when: distfiles_listen_addr is defined
-
-- name: install golang
-  apt:
-    name: golang
-    default_release: "{{ debian_codename }}-backports"
-    update_cache: yes
-    state: latest
-  when: distfiles_listen_addr is defined and (telegram_notify_git.changed or not telegram_notify_bin.stat.exists)
 
 - name: build binary
   command:

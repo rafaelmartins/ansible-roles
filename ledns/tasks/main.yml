@@ -1,4 +1,12 @@
 ---
+- name: install golang
+  apt:
+    name: golang
+    default_release: "{{ debian_codename }}-backports"
+    update_cache: yes
+    state: latest
+  when: distfiles_listen_addr is defined
+
 - name: clone or update git repository
   git:
     repo: https://github.com/rafaelmartins/ledns.git
@@ -11,14 +19,6 @@
     path: /usr/local/bin/ledns
   register: ledns_bin
   when: distfiles_listen_addr is defined
-
-- name: install golang
-  apt:
-    name: golang
-    default_release: "{{ debian_codename }}-backports"
-    update_cache: yes
-    state: latest
-  when: distfiles_listen_addr is defined and (ledns_git.changed or not ledns_bin.stat.exists)
 
 - name: build binary
   command:

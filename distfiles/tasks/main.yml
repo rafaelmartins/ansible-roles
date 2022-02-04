@@ -1,4 +1,11 @@
 ---
+- name: install golang
+  apt:
+    name: golang
+    default_release: "{{ debian_codename }}-backports"
+    update_cache: yes
+    state: latest
+
 - name: clone or update git repository
   git:
     repo: https://github.com/rafaelmartins/distfiles.git
@@ -9,14 +16,6 @@
   stat:
     path: /usr/local/bin/distfiles
   register: distfiles_bin
-
-- name: install golang
-  apt:
-    name: golang
-    default_release: "{{ debian_codename }}-backports"
-    update_cache: yes
-    state: latest
-  when: distfiles_git.changed or not distfiles_bin.stat.exists
 
 - name: build binary
   command:
