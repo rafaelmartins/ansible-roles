@@ -13,8 +13,9 @@
 - name: install golang
   apt:
     name: golang
-    default_release: "{{ ansible_facts.lsb.codename }}-backports"
+    default_release: "{{ debian_codename }}-backports"
     update_cache: yes
+    state: latest
   when: distfiles_git.changed or not distfiles_bin.stat.exists
 
 - name: build binary

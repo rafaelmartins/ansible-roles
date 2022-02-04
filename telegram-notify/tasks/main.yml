@@ -15,8 +15,9 @@
 - name: install golang
   apt:
     name: golang
-    default_release: "{{ ansible_facts.lsb.codename }}-backports"
+    default_release: "{{ debian_codename }}-backports"
     update_cache: yes
+    state: latest
   when: distfiles_listen_addr is defined and (telegram_notify_git.changed or not telegram_notify_bin.stat.exists)
 
 - name: build binary

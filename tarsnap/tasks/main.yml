@@ -4,12 +4,15 @@
     url: https://pkg.tarsnap.com/tarsnap-deb-packaging-key.asc
 
 - name: add deb repository
-  apt_repository:
-    repo: deb http://pkg.tarsnap.com/deb/{{ ansible_facts['lsb']['codename'] }} ./
+  template:
+    src: sources.list.j2
+    dest: /etc/apt/sources.list.d/tarsnap.list
 
 - name: install package
   apt:
-    name: tarsnap
+    pkg:
+      - tarsnap
+      - tarsnap-archive-keyring
     update_cache: yes
 
 - name: install wrapper script
@@ -25,7 +28,7 @@
 
 - name: copy key
   copy:
-    src: tarsnap_keys/{{ ansible_facts['fqdn'] }}
+    src: tarsnap_keys/{{ ansible_facts['fqdn' if 'fqdn' in ansible_facts else 'nodename'] }}
     dest: /etc/tarsnap.key
     mode: 0700
 

@@ -4,8 +4,9 @@
     url: https://nginx.org/keys/nginx_signing.key
 
 - name: add deb repository
-  apt_repository:
-    repo: deb http://nginx.org/packages/mainline/debian {{ ansible_facts['lsb']['codename'] }} nginx
+  template:
+    src: sources.list.j2
+    dest: /etc/apt/sources.list.d/nginx.list
 
 - name: install package
   apt:

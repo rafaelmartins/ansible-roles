@@ -1,14 +1,54 @@
 ---
-- name: ensure that backports repository is enabled
-  apt_repository:
-    repo: deb http://deb.debian.org/debian {{ ansible_facts.lsb.codename }}-backports main
+- name: detect debian codename
+  set_fact:
+    debian_codename: "{% if upgrade is defined %}{{ upgrade }}{% else %}{{ ansible_facts.lsb.codename }}{% endif %}"
   tags:
     - bootstrap
 
-- name: update system packages
+- name: update sources.list
+  template:
+    src: sources.list.j2
+    dest: /etc/apt/sources.list
+  tags:
+    - bootstrap
+
+- name: remove default /etc/apt/sources.list.d
+  file:
+    path: /etc/apt/sources.list.d
+    state: absent
+  tags:
+    - never
+    - bootstrap
+
+- name: ensure that /etc/apt/sources.list.d exists
+  file:
+    path: /etc/apt/sources.list.d
+    state: directory
+  tags:
+    - bootstrap
+
+- name: create upgrade logs directory
+  file:
+    path: /var/log/apt-upgrades
+    state: directory
+  tags:
+    - bootstrap
+
+- name: upgrade system packages
   apt:
     update_cache: yes
-    upgrade: safe
+    upgrade: full
+    autoclean: yes
+    autoremove: yes
+  register: apt_upgrade
+  tags:
+    - bootstrap
+
+- name: store apt upgrade logs
+  copy:
+    content: "{{ apt_upgrade.stdout }}"
+    dest: /var/log/apt-upgrades/full-upgrade_{{ ansible_date_time.iso8601 }}.log
+  when: apt_upgrade.changed
   tags:
     - bootstrap
 

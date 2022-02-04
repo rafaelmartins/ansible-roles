@@ -1,13 +1,8 @@
 ---
 - name: add deb repository
-  apt_repository:
-    repo: deb [trusted=yes] https://deb.rgm.io/blogc {{ ansible_facts['lsb']['codename'] }} main
-  when: blogc_deb != 'snapshot'
-
-- name: add snapshot deb repository
-  apt_repository:
-    repo: deb [trusted=yes] https://deb.rgm.io/blogc-snapshot {{ ansible_facts['lsb']['codename'] }} main
-  when: blogc_deb == 'snapshot'
+  template:
+    src: sources.list.j2
+    dest: /etc/apt/sources.list.d/blogc.list
 
 - name: install packages
   apt:
