@@ -1,0 +1,8 @@
+[NetDev]
+Name=br-public
+Kind=bridge
+
+[Bridge]
+STP=off
+ForwardDelaySec=0
+MaxAgeSec=0

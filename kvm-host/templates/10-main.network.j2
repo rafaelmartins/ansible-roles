@@ -1,0 +1,15 @@
+[Match]
+Name={{ ansible_default_ipv4.interface }}
+
+[Address]
+Address={{ ansible_default_ipv4.address }}/32
+Peer={{ ansible_default_ipv4.gateway }}/32
+
+[Network]
+Gateway={{ ansible_default_ipv4.gateway }}
+IPForward=ipv4
+{% for addr in ansible_dns.nameservers %}
+{% if '.' in addr %}
+DNS={{ addr }}
+{% endif %}
+{% endfor %}

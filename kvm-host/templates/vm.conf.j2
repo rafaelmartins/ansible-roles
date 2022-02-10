@@ -1,0 +1,16 @@
+{% if 'vnc_port' in item %}
+DISPLAY=vnc=127.0.0.1:{{ item.vnc_port }}
+{% else %}
+DISPLAY=none
+{% endif %}
+DISKIMAGE_0={{ item.disk_image_0 }}
+{% if 'disk_image_1' in item %}
+DISKIMAGE_1={{ item.disk_image_1 }}
+{% endif %}
+MACADDR={{ item.mac_address }}
+MEMORY={{ item.memory }}
+SMP={{ item.smp }}
+BRIDGE={{ item.bridge }}
+{% if 'qemu_extra_args' in item %}
+EXTRA_ARGS={{ item.qemu_extra_args }}
+{% endif %}

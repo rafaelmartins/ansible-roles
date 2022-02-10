@@ -1,0 +1,9 @@
+[Match]
+Name=br-public
+
+[Address]
+Address={{ kvm_host_public_bridge_address }}
+
+[Route]
+Destination={{ kvm_host_public_bridge_subnet }}
+Scope=link

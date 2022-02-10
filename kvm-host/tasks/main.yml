@@ -1,0 +1,139 @@
+---
+- name: install dependencies
+  apt:
+    pkg:
+      - bridge-utils
+      - dnsmasq
+      - netcat-openbsd
+      - uml-utilities
+  tags:
+    - debug
+
+- name: install qemu packages
+  apt:
+    pkg:
+      - qemu-system-x86
+      - qemu-utils
+    install_recommends: no
+  tags:
+    - debug
+
+- name: ensure that systemd-networkd configuration directory exists
+  file:
+    path: /etc/systemd/network
+    state: directory
+  tags:
+    - debug
+
+- name: generate network configuration for main interface
+  template:
+    src: 10-main.network.j2
+    dest: /etc/systemd/network/10-{{ ansible_default_ipv4.interface }}.network
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: generate network device for private bridge
+  copy:
+    src: 50-br-private.netdev
+    dest: /etc/systemd/network/50-br-private.netdev
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: generate network configuration for private bridge
+  copy:
+    src: 50-br-private.network
+    dest: /etc/systemd/network/50-br-private.network
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: generate network device for public bridge
+  copy:
+    src: 50-br-public.netdev
+    dest: /etc/systemd/network/50-br-public.netdev
+  when: kvm_host_public_bridge_address is defined and kvm_host_public_bridge_subnet is defined
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: generate network configuration for public bridge
+  template:
+    src: 50-br-public.network.j2
+    dest: /etc/systemd/network/50-br-public.network
+  when: kvm_host_public_bridge_address is defined and kvm_host_public_bridge_subnet is defined
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: enable systemd-networkd service
+  systemd:
+    name: systemd-networkd
+    enabled: yes
+    daemon_reload: yes
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: disable networking service
+  systemd:
+    name: networking
+    enabled: no
+  notify:
+    - restart systemd-networkd
+  tags:
+    - debug
+
+- name: check if systemd-networkd is running (if this fail, reboot the server manually to replace networking with systemd-networkd)
+  command:
+    cmd: systemctl is-active systemd-networkd
+  changed_when: false
+  tags:
+    - debug
+
+- name: generate kvm service (restart vms manually if needed)
+  copy:
+    src: kvm@.service
+    dest: /etc/systemd/system/kvm@.service
+  tags:
+    - debug
+
+- name: generate kvm tmpfiles configuration
+  copy:
+    src: kvm.conf
+    dest: /etc/tmpfiles.d/kvm.conf
+  notify:
+    - create tmpfiles
+  tags:
+    - debug
+
+- name: generate dnsmasq configuration
+  template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+  notify:
+    - restart dnsmasq
+  tags:
+    - debug
+
+- name: ensure that virtual machine configuration directory exists
+  file:
+    path: /etc/kvm
+    state: directory
+  tags:
+    - debug
+
+- name: generate virtual machine configurations
+  template:
+    src: vm.conf.j2
+    dest: /etc/kvm/{{ item.name }}.conf
+  with_items: "{{ kvm_host_virtual_machines }}"
+  tags:
+    - debug

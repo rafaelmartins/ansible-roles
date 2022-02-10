@@ -1,0 +1,38 @@
+[Unit]
+Description=QEMU/KVM Virtual Machine %I
+After=network.target dnsmasq.service
+Wants=network.target dnsmasq.service
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/kvm/%I.conf
+PIDFile=/run/kvm/%I.pid
+TimeoutStopSec=60
+
+ExecStartPre=/usr/bin/tunctl -u nobody -t qtap-%I
+ExecStartPre=/sbin/brctl addif ${BRIDGE} qtap-%I
+ExecStartPre=/usr/bin/ip address add 0.0.0.0/0 dev qtap-%I
+ExecStartPre=/usr/bin/ip link set dev qtap-%I up promisc on
+ExecStart=/bin/bash -c 'exec /usr/bin/qemu-system-x86_64 \
+    -machine accel=kvm --enable-kvm \
+    -daemonize \
+    -display ${DISPLAY} \
+    -pidfile /run/kvm/%I.pid \
+    -monitor unix:/run/kvm/%I.monitor,server,nowait \
+    -runas nobody \
+    -name %I \
+    ${DISKIMAGE_0:+-drive file=${DISKIMAGE_0},if=virtio,index=0,cache=none} \
+    ${DISKIMAGE_1:+-drive file=${DISKIMAGE_1},if=virtio,index=1,cache=none} \
+    -net nic,model=virtio,macaddr=${MACADDR} \
+    -net tap,ifname=qtap-%I,script=no \
+    -m ${MEMORY} \
+    -smp ${SMP} \
+    $EXTRA_ARGS'
+
+ExecStop=/bin/bash -c "echo system_powerdown | netcat -U /run/kvm/%I.monitor -q 10 &> /dev/null"
+ExecStopPost=/usr/bin/ip link set dev qtap-%I down
+ExecStopPost=/sbin/brctl delif ${BRIDGE} qtap-%I
+ExecStopPost=/usr/bin/tunctl -d qtap-%I
+
+[Install]
+WantedBy=multi-user.target

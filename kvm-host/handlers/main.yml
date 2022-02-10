@@ -1,0 +1,14 @@
+---
+- name: restart systemd-networkd
+  systemd:
+    name: systemd-networkd
+    state: restarted
+
+- name: create tmpfiles
+  command:
+    cmd: systemd-tmpfiles --create
+
+- name: restart dnsmasq
+  systemd:
+    name: dnsmasq
+    state: restarted

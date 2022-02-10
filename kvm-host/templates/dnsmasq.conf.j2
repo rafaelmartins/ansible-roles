@@ -1,0 +1,16 @@
+{% if kvm_host_public_bridge_address is defined and kvm_host_public_bridge_subnet is defined %}
+interface=br-public
+{% endif %}
+interface=br-private
+bind-dynamic
+
+log-dhcp
+
+{% if kvm_host_public_bridge_address is defined and kvm_host_public_bridge_subnet is defined %}
+dhcp-range={{ kvm_host_public_bridge_subnet.split('/')[0] }},static
+{% endif %}
+dhcp-range=10.0.10.0,static
+
+{% for vm in kvm_host_virtual_machines %}
+dhcp-host={{ vm.mac_address }},{{ vm.name }},{{ vm.address }}
+{% endfor %}
