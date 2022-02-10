@@ -61,6 +61,8 @@
       - htop
       - lshw
       - vim
+      - curl
+      - net-tools
   tags:
     - bootstrap
 
