@@ -1,7 +1,21 @@
 ---
-- name: add gpg key
-  apt_key:
+- name: check if gpg key exists
+  stat:
+    path: /usr/share/keyrings/tarsnap-archive-keyring.gpg
+  register: gpgkey
+
+- name: download gpg key
+  get_url:
     url: https://pkg.tarsnap.com/tarsnap-deb-packaging-key.asc
+    dest: /tmp/tarsnap-deb-packaging-key.asc
+    force: yes
+  when: not gpgkey.stat.exists
+
+- name: convert and install gpg key
+  command:
+    cmd: gpg -o /usr/share/keyrings/tarsnap-archive-keyring.gpg --dearmor /tmp/tarsnap-deb-packaging-key.asc
+    creates: /usr/share/keyrings/tarsnap-archive-keyring.gpg
+  when: not gpgkey.stat.exists
 
 - name: add deb repository
   template:
