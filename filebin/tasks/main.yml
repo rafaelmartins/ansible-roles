@@ -1,4 +1,11 @@
 ---
+- name: create systemd service
+  template:
+    src: filebin.service.j2
+    dest: /etc/systemd/system/filebin.service
+  notify:
+    - restart filebin
+
 - name: download distfile
   include_role:
     name: distfile
@@ -6,6 +13,7 @@
     distfile_name: filebin
     distfile_file_prefix: filebin-static-linux-amd64-
     distfile_file_extension: .tar.xz
+    distfile_service_name: filebin
     distfile_bin:
       - filebin
     distfile_data:
@@ -17,17 +25,3 @@
     dest: /etc/nginx/conf.d/90-{{ filebin_server_name }}.conf
   notify:
     - restart nginx
-
-- name: create systemd service
-  template:
-    src: filebin.service.j2
-    dest: /etc/systemd/system/filebin.service
-  notify:
-    - restart filebin
-
-- name: enable and start systemd service
-  systemd:
-    name: filebin
-    enabled: yes
-    state: started
-    daemon_reload: yes
