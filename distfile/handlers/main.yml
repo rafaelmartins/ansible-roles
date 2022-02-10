@@ -1,0 +1,6 @@
+---
+- name: restart distfile service
+  systemd:
+    name: "{{ distfile_service_name }}"
+    state: restarted
+  when: distfile_service_name is defined

@@ -15,7 +15,7 @@
 - name: download
   get_url:
     url: "{{ distfile.file_url }}"
-    dest: /var/download/{{ distfile_name }}.tar.xz
+    dest: /var/download/{{ distfile_name }}{{ distfile_file_extension|default('.tar.gz') }}
     checksum: "{{ distfile.checksum }}"
   register: distfile_download
 
@@ -41,6 +41,8 @@
     dest: /usr/local/bin/{{ item }}
     mode: "0755"
   loop: "{{ distfile_bin }}"
+  notify:
+    - restart distfile service
   when: distfile_download.changed and distfile_bin is defined
 
 - name: create data directories
@@ -57,6 +59,8 @@
     dest: "{{ item.value }}/{{ item.key | basename }}"
     mode: "0644"
   loop: "{{ distfile_data | dict2items }}"
+  notify:
+    - restart distfile service
   when: distfile_download.changed and distfile_data is defined
 
 - name: delete temporary directory
@@ -64,3 +68,11 @@
     path: "{{ distfile_tempdir.path }}"
     state: absent
   when: distfile_download.changed
+
+- name: enable and start distfile service
+  systemd:
+    name: "{{ distfile_service_name }}"
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  when: distfile_service_name is defined
