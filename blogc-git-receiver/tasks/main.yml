@@ -54,3 +54,4 @@
   copy:
     content: "/home/blogc\n"
     dest: /etc/tarsnap.d/blogc-git-receiver
+  when: bgr_backup_websites is not defined or bgr_backup_websites
