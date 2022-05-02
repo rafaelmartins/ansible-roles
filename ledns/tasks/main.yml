@@ -72,5 +72,7 @@
 
 - name: backup data directory
   copy:
-    content: "/var/lib/ledns\n"
+    content: |
+      /var/lib/ledns/account
+      /var/lib/ledns/certs
     dest: /etc/tarsnap.d/ledns
