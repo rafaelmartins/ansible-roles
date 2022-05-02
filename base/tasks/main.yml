@@ -58,6 +58,7 @@
       - sudo
       - git
       - gpg
+      - gpg-agent
       - htop
       - lshw
       - vim
