@@ -68,3 +68,12 @@
   when: ssl_certificates is defined
   notify:
     - restart nginx
+
+- name: install host redirect configurations
+  template:
+    src: nginx-redirect.conf.j2
+    dest: /etc/nginx/conf.d/05-{{ item.name }}-redirect.conf
+  loop: "{{ redirect_hosts }}"
+  when: redirect_hosts is defined
+  notify:
+    - restart nginx
