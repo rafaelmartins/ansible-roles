@@ -13,6 +13,11 @@
     name: nginx
     update_cache: yes
 
+- name: install xslt module
+  apt:
+    name: nginx-module-xslt
+  when: directory_indexes is defined
+
 - name: install configuration
   template:
     src: nginx.conf.j2
@@ -75,5 +80,22 @@
     dest: /etc/nginx/conf.d/05-{{ item.name }}-redirect.conf
   loop: "{{ redirect_hosts }}"
   when: redirect_hosts is defined
+  notify:
+    - restart nginx
+
+- name: copy index.xslt template
+  copy:
+    src: index.xslt
+    dest: /var/www/index.xslt
+  when: directory_indexes is defined
+  notify:
+    - restart nginx
+
+- name: install directory index configurations
+  template:
+    src: nginx-index.conf.j2
+    dest: /etc/nginx/conf.d/05-{{ item.name }}-index.conf
+  loop: "{{ directory_indexes }}"
+  when: directory_indexes is defined
   notify:
     - restart nginx

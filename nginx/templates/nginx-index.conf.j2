@@ -1,0 +1,30 @@
+server {
+    {% if 'ssl_config' in item %}
+    listen 443 http2 ssl;
+    server_name {{ item.name }};
+    include {{ item.ssl_config }};
+    {% else %}
+    listen 80;
+    server_name {{ item.name }};
+    {% endif %}
+
+    {% if nginx_logging is defined and nginx_logging %}
+    access_log /var/log/nginx/{{ item.name }}.access.log main;
+    error_log /var/log/nginx/{{ item.name }}.error.log warn;
+    {% endif %}
+
+    autoindex on;
+    autoindex_format xml;
+
+    root {{ item.root }};
+
+    location / {
+        try_files $uri @autoindex;
+    }
+
+    location @autoindex {
+        xslt_stylesheet /var/www/index.xslt path="$uri";
+        xslt_string_param title {{ item.title|quote }};
+        xslt_string_param footer {{ item.footer|quote }};
+    }
+}

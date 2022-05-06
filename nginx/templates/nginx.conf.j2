@@ -6,6 +6,10 @@ error_log /var/log/nginx/error.log warn;
 {% endif %}
 pid /var/run/nginx.pid;
 
+{% if directory_indexes is defined %}
+load_module /usr/lib/nginx/modules/ngx_http_xslt_filter_module.so;
+{% endif %}
+
 events {
     worker_connections 1024;
     accept_mutex on;
