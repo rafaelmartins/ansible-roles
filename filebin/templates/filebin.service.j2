@@ -35,6 +35,9 @@ Environment=FILEBIN_ID_LENGTH={{ filebin_id_length }}
 {% if filebin_upload_max_size_mb is defined %}
 Environment=FILEBIN_UPLOAD_MAX_SIZE_MB={{ filebin_upload_max_size_mb }}
 {% endif %}
+{% if filebin_index_footer is defined %}
+Environment=FILEBIN_INDEX_FOOTER={{ filebin_index_footer|quote }}
+{% endif %}
 Environment=FILEBIN_AUTH_USERNAME={{ filebin_auth_username }}
 Environment=FILEBIN_AUTH_PASSWORD={{ filebin_auth_password }}
 User=nobody
