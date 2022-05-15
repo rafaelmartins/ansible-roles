@@ -40,7 +40,7 @@ for configfile in "${TARSNAP_CONFIGDIR:-/etc/tarsnap.d}"/*; do
     done < "${configfile}"
 done
 
-backupname="$(hostname)_$(date -u +%Y%m%d%H%M%S)"
+backupname="$(hostname --fqdn)_$(date -u +%Y%m%d%H%M%S)"
 
 echo "Starting backup: ${backupname}" >&2
 echo "Paths: $(printf '"%s" ' "${paths[@]}")" >&2
