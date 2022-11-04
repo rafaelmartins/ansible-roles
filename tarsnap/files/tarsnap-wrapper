@@ -29,6 +29,12 @@ if [[ -n "${TARSNAP_RESTORE}" ]]; then
     exit 0
 fi
 
+for hook in "${TARSNAP_HOOKDIR:-/etc/tarsnap.hook.d}"/*; do
+    if [[ -x "${hook}" ]]; then
+        "${hook}"
+    fi
+done
+
 paths=()
 for configfile in "${TARSNAP_CONFIGDIR:-/etc/tarsnap.d}"/*; do
     while read l; do
