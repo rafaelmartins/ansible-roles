@@ -78,20 +78,40 @@
   apt:
     name: haveged
     state: absent
+    purge: yes
   when: hwrng.stat.exists
   tags:
     - bootstrap
 
-- name: install rng-tools (we have /dev/hwrng)
-  apt:
-    name: rng-tools
-  when: hwrng.stat.exists
-  tags:
-    - bootstrap
-
-- name: ensure that rng-tools is enabled and running (we have /dev/hwrng)
+- name: ensure that debian's rng-tools fork is disabled and stopped (we have /dev/hwrng)
   systemd:
     name: rng-tools
+    enabled: no
+    state: stopped
+    daemon_reload: yes
+  when: hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: remove debian's rng-tools fork (we have /dev/hwrng)
+  apt:
+    name: rng-tools-debian
+    state: absent
+    purge: yes
+  when: hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: install rng-tools5 (we have /dev/hwrng)
+  apt:
+    name: rng-tools5
+  when: hwrng.stat.exists
+  tags:
+    - bootstrap
+
+- name: ensure that rngd is enabled and running (we have /dev/hwrng)
+  systemd:
+    name: rngd
     enabled: yes
     state: started
     daemon_reload: yes
@@ -101,8 +121,11 @@
 
 - name: remove rng-tools (we don't have /dev/hwrng)
   apt:
-    name: rng-tools
+    pkg:
+      - rng-tools-debian
+      - rng-tools5
     state: absent
+    purge: yes
   when: not hwrng.stat.exists
   tags:
     - bootstrap
